@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Кроссворды</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Lora:ital,wght@0,400;0,500;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4EEE2;--paper-2:#FBF7EF;--ink:#28243D;--ink-soft:rgba(40,36,61,.55);
+  --line:rgba(40,36,61,.22);--berry:#C44569;--berry-tint:#FBE9EE;--berry-soft:#F3D2DC;
+  --teal:#2A9D8F;--wrong:#D64545;--wrong-tint:#FBE4E4;--cs:38px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--paper);background-image:radial-gradient(120% 80% at 50% -10%, #FAF5EC 0%, var(--paper) 60%);
+  color:var(--ink);font-family:"Nunito",system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:16px 14px 56px}
+
+header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.mark{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:0 0 auto;
+  background:var(--paper-2);border:2px solid var(--ink);border-radius:8px;font-family:"Unbounded";font-weight:700;
+  font-size:22px;position:relative;box-shadow:3px 3px 0 var(--berry-soft)}
+.mark::before{content:"1";position:absolute;top:2px;left:4px;font-family:"Nunito";font-weight:800;font-size:10px;color:var(--berry)}
+.titles h1{font-family:"Unbounded";font-weight:500;font-size:clamp(21px,6vw,28px);margin:0;letter-spacing:-.5px;line-height:1}
+.titles p{margin:3px 0 0;font-size:12.5px;color:var(--ink-soft);font-style:italic;font-family:"Lora"}
+
+.setup{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-bottom:12px}
+.field{flex:1 1 140px;min-width:130px;display:flex;flex-direction:column;gap:3px}
+.field label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);padding-left:2px}
+select{font-family:"Nunito";font-weight:700;font-size:14px;color:var(--ink);background:var(--paper-2);
+  border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%2328243D' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center}
+.newbtn{flex:1 1 140px;min-width:130px;align-self:flex-end;cursor:pointer;border-radius:11px;padding:11px 14px;
+  font-family:"Nunito";font-weight:800;font-size:15px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper-2);
+  box-shadow:3px 3px 0 var(--berry-soft);display:flex;align-items:center;justify-content:center;gap:7px;transition:.12s;height:42px}
+.newbtn:active{transform:translateY(1px);box-shadow:1px 1px 0 var(--berry-soft)}
+
+.cluebar{display:flex;align-items:center;gap:10px;margin:6px 0 12px;background:var(--paper-2);
+  border:1.5px solid var(--line);border-radius:12px;padding:10px 8px}
+.cluebar .nav{flex:0 0 auto;width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:transparent;
+  cursor:pointer;font-size:18px;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.cluebar .nav:active{background:var(--berry-tint)}
+.cluebar .txt{flex:1;min-width:0}
+.cluebar .tag{font-weight:800;font-size:12px;color:var(--berry);text-transform:uppercase;letter-spacing:.4px}
+.cluebar .ct{font-family:"Lora";font-size:15px;line-height:1.3;margin-top:1px}
+
+.main{display:flex;gap:26px;align-items:flex-start}
+.left{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:13px;width:100%}
+.right{flex:1;min-width:0;display:none}
+@media(min-width:780px){.left{width:auto}.right{display:block}}
+
+.gridwrap{width:100%;display:flex;justify-content:center;overflow-x:auto;min-height:120px;position:relative}
+.grid{display:grid;gap:0;touch-action:manipulation}
+.gap{width:var(--cs);height:var(--cs)}
+.cell{position:relative;width:var(--cs);height:var(--cs);background:var(--paper-2);border:1px solid var(--line);
+  margin:-0.5px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;
+  font-weight:800;color:var(--ink);font-size:calc(var(--cs)*.5);line-height:1;transition:background .1s}
+.cell .num{position:absolute;top:1px;left:3px;font-size:calc(var(--cs)*.27);font-weight:800;color:var(--ink-soft);line-height:1;pointer-events:none}
+.cell.inword{background:var(--berry-tint)}
+.cell.active{background:var(--berry);color:#fff;z-index:3;border-color:var(--berry)}
+.cell.active .num{color:rgba(255,255,255,.85)}
+.cell.right{color:var(--teal)}
+.cell.wrong{background:var(--wrong-tint);color:var(--wrong)}
+.cell.active.wrong{background:var(--berry);color:#fff}
+.cell.revealed{color:var(--teal)}
+#hidden{position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0;font-size:16px;z-index:-1}
+
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+  background:var(--paper);font-family:"Lora";font-style:italic;color:var(--ink-soft);font-size:14px}
+.spinner{width:26px;height:26px;border:3px solid var(--berry-soft);border-top-color:var(--berry);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;max-width:460px}
+.btn{flex:1 1 auto;min-width:120px;cursor:pointer;border-radius:11px;padding:11px 12px;font-family:"Nunito";font-weight:800;
+  font-size:14px;border:1.5px solid var(--ink);background:var(--paper-2);color:var(--ink);transition:.12s;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:3px 3px 0 rgba(42,157,143,.25)}
+.btn.ghost{flex:0 0 auto;min-width:0;width:46px;padding:11px 0}
+.progress{font-size:13px;color:var(--ink-soft);font-weight:700;text-align:center;width:100%}
+.progress b{color:var(--ink)}
+.hint{font-size:12px;color:var(--ink-soft);text-align:center;font-family:"Lora";font-style:italic}
+
+.cluecol h3{font-family:"Unbounded";font-weight:500;font-size:13px;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--berry);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.cluecol h3::after{content:"";flex:1;height:2px;background:var(--line);border-radius:2px}
+.cluecol{margin-bottom:20px}
+.clue{display:flex;gap:9px;padding:7px 9px;border-radius:8px;cursor:pointer;font-family:"Lora";font-size:14.5px;line-height:1.3;transition:.1s}
+.clue .n{font-family:"Nunito";font-weight:800;color:var(--berry);flex:0 0 auto;min-width:18px}
+.clue:hover{background:var(--paper-2)}
+.clue.active{background:var(--berry-tint)}
+.clue.solved{color:var(--ink-soft)}
+.clue.solved .n{color:var(--teal)}
+.clue.solved .t{text-decoration:line-through;text-decoration-color:var(--teal);text-decoration-thickness:1.5px}
+.mobileclues{display:block;margin-top:24px}
+@media(min-width:780px){.mobileclues{display:none}}
+
+.win{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(40,36,61,.45);z-index:50;padding:24px}
+.win.show{display:flex}
+.wincard{background:var(--paper-2);border:2px solid var(--ink);border-radius:18px;padding:24px;text-align:center;max-width:330px;
+  box-shadow:8px 8px 0 var(--berry-soft);animation:pop .35s ease}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.wincard h2{font-family:"Unbounded";font-weight:700;font-size:21px;margin:6px 0 8px}
+.wincard p{font-family:"Lora";color:var(--ink-soft);margin:0 0 18px;font-size:15px}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:49;overflow:hidden}
+.conf{position:absolute;width:11px;height:11px;border:1.5px solid var(--ink);border-radius:2px;top:-20px}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg)}}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">К</div>
+    <div class="titles"><h1>Кроссворды</h1><p>Свежий кроссворд по одному нажатию</p></div>
+  </header>
+
+  <div class="setup">
+    <div class="field"><label>Тема</label><select id="themeSel"></select></div>
+    <div class="field"><label>Размер</label>
+      <select id="sizeSel">
+        <option value="small">Маленький</option>
+        <option value="medium" selected>Средний</option>
+        <option value="large">Большой</option>
+      </select>
+    </div>
+    <button class="newbtn" id="newBtn">✦ Новый кроссворд</button>
+  </div>
+
+  <div class="cluebar">
+    <button class="nav" id="prevW" aria-label="Предыдущее">‹</button>
+    <div class="txt"><div class="tag" id="clueTag">по горизонтали</div><div class="ct" id="clueText">—</div></div>
+    <button class="nav" id="nextW" aria-label="Следующее">›</button>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <div class="gridwrap"><div class="grid" id="grid"></div>
+        <div class="loading" id="loading"><div class="spinner"></div><div>Собираю кроссворд…</div></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="checkBtn">Проверить</button>
+        <button class="btn" id="hintBtn">Открыть букву</button>
+        <button class="btn ghost" id="clearBtn" title="Очистить" aria-label="Очистить">⟲</button>
+      </div>
+      <div class="progress" id="progress"></div>
+      <div class="hint">Нажмите на клетку и печатайте. Повторное нажатие меняет направление.</div>
+    </div>
+    <div class="right" id="cluePanel"></div>
+  </div>
+
+  <div class="mobileclues" id="mobileClues"></div>
+</div>
+
+<input id="hidden" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" aria-hidden="true">
+<div class="confetti" id="confetti"></div>
+<div class="win" id="win"><div class="wincard"><div style="font-size:32px">🎉</div>
+  <h2>Кроссворд разгадан!</h2><p id="winText"></p>
+  <button class="btn primary" id="winNew" style="width:100%;margin-bottom:8px">Следующий кроссворд</button>
+  <button class="btn" id="winClose" style="width:100%">Закрыть</button></div></div>
+
+<script>
+// ===== Чистый генератор кроссвордов (greedy + проверки) =====
+// Гарантии: все слова связаны, нет конфликтов букв, нет «паразитных»
+// соседних слов (каждый ряд/столбец из >=2 заполненных клеток — это слово).
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
+const K=(r,c)=>r+","+c;
+
+function normalizeEntries(entries, maxLen){
+  maxLen=maxLen||10;
+  const seen=new Set(), out=[];
+  for(const e of entries){
+    let a=(e.answer||e.a||"").toUpperCase().replace(/Ё/g,"Е").replace(/[^А-Я]/g,"");
+    if(a.length<3||a.length>maxLen) continue;
+    if(seen.has(a)) continue; seen.add(a);
+    out.push({answer:a, clue:e.clue});
+  }
+  return out;
+}
+
+function tryPlace(word, sr, sc, horiz, grid){
+  // returns {ok, crossings} ; checks all rules
+  const len=word.length; let crossings=0;
+  // before/after along axis must be empty
+  const beforeK = horiz?K(sr,sc-1):K(sr-1,sc);
+  const afterK  = horiz?K(sr,sc+len):K(sr+len,sc);
+  if(grid.has(beforeK)||grid.has(afterK)) return {ok:false};
+  for(let k=0;k<len;k++){
+    const r=horiz?sr:sr+k, c=horiz?sc+k:sc, key=K(r,c);
+    const cur=grid.get(key);
+    if(cur!==undefined){
+      if(cur!==word[k]) return {ok:false};
+      crossings++; // valid crossing, perpendicular neighbours allowed
+    }else{
+      // empty cell: perpendicular neighbours must be empty
+      const n1=horiz?K(r-1,c):K(r,c-1);
+      const n2=horiz?K(r+1,c):K(r,c+1);
+      if(grid.has(n1)||grid.has(n2)) return {ok:false};
+    }
+  }
+  return {ok:true, crossings};
+}
+
+function attempt(entries, target){
+  const pool=shuffle(entries).slice(0, Math.min(entries.length, 80));
+  pool.sort((a,b)=>b.answer.length-a.answer.length);
+  const grid=new Map(); const placed=[];
+  const first=pool[0];
+  for(let k=0;k<first.answer.length;k++) grid.set(K(0,k), first.answer[k]);
+  placed.push({...first, r:0, c:0, horiz:true});
+  let bnd={minR:0,minC:0,maxR:0,maxC:first.answer.length-1};
+  const usedPool = pool.slice(1);
+
+  for(let pass=0; pass<3 && placed.length<target; pass++){
+    for(const cand of usedPool){
+      if(placed.some(p=>p.answer===cand.answer)) continue;
+      if(placed.length>=target) break;
+      const w=cand.answer; let best=null;
+      for(let i=0;i<w.length;i++){
+        for(const p of placed){
+          for(let k=0;k<p.answer.length;k++){
+            if(p.answer[k]!==w[i]) continue;
+            const cr = p.horiz?p.r:p.r+k;
+            const cc = p.horiz?p.c+k:p.c;
+            const horiz=!p.horiz;
+            const sr=horiz?cr:cr-i, sc=horiz?cc-i:cc;
+            const res=tryPlace(w,sr,sc,horiz,grid);
+            if(res.ok){
+              const er=horiz?sr:sr+w.length-1, ec=horiz?sc+w.length-1:sc;
+              const nMaxR=Math.max(bnd.maxR,er), nMinR=Math.min(bnd.minR,sr);
+              const nMaxC=Math.max(bnd.maxC,ec), nMinC=Math.min(bnd.minC,sc);
+              const side=Math.max(nMaxR-nMinR+1, nMaxC-nMinC+1);
+              const area=(nMaxR-nMinR+1)*(nMaxC-nMinC+1);
+              const score=res.crossings*50 - side*16 - area*0.12;
+              if(!best||score>best.score) best={sr,sc,horiz,score,er,ec};
+            }
+          }
+        }
+      }
+      if(best){
+        for(let k=0;k<w.length;k++){
+          const r=best.horiz?best.sr:best.sr+k, c=best.horiz?best.sc+k:best.sc;
+          grid.set(K(r,c), w[k]);
+        }
+        placed.push({...cand, r:best.sr, c:best.sc, horiz:best.horiz});
+        bnd.minR=Math.min(bnd.minR,best.sr); bnd.minC=Math.min(bnd.minC,best.sc);
+        bnd.maxR=Math.max(bnd.maxR,best.er); bnd.maxC=Math.max(bnd.maxC,best.ec);
+      }
+    }
+  }
+  return {placed, grid};
+}
+
+function makeCrossword(entries, opts={}){
+  const maxLen=opts.maxLen||9;
+  entries=normalizeEntries(entries, maxLen);
+  const target=opts.target||14;
+  let best=null;
+  const tries=opts.tries||30;
+  const minWords=opts.minWords||Math.max(6,target-3);
+  const dims=res=>{let a=1e9,b=1e9,x=-1e9,y=-1e9;for(const k of res.grid.keys()){const [r,c]=k.split(",").map(Number);a=Math.min(a,r);b=Math.min(b,c);x=Math.max(x,r);y=Math.max(y,c);}return {area:(x-a+1)*(y-b+1), side:Math.max(x-a+1,y-b+1)};};
+  const better=(r,b)=>{
+    if(!b) return true;
+    const rOk=r.placed.length>=minWords, bOk=b.placed.length>=minWords;
+    if(rOk!==bOk) return rOk;                       // достаточно слов — приоритет
+    if(rOk){ // оба норм по словам -> компактнее
+      if(r._side!==b._side) return r._side<b._side;
+      return r._area<b._area;
+    }
+    return r.placed.length>b.placed.length;         // иначе больше слов
+  };
+  for(let t=0;t<tries;t++){
+    const res=attempt(entries, target);
+    const d=dims(res); res._area=d.area; res._side=d.side;
+    if(better(res,best)) best=res;
+  }
+  if(!best||best.placed.length<3) return null;
+  // normalize coords, assign numbers
+  let minR=1e9,minC=1e9,maxR=-1e9,maxC=-1e9;
+  for(const k of best.grid.keys()){const [r,c]=k.split(",").map(Number);minR=Math.min(minR,r);minC=Math.min(minC,c);maxR=Math.max(maxR,r);maxC=Math.max(maxC,c);}
+  const words=best.placed.map(p=>({answer:p.answer, clue:p.clue, r:p.r-minR, c:p.c-minC, dir:p.horiz?"a":"d"}));
+  const cells=new Map();
+  for(const w of words) for(let i=0;i<w.answer.length;i++){
+    const r=w.r+(w.dir==="d"?i:0), c=w.c+(w.dir==="a"?i:0), key=K(r,c);
+    if(!cells.has(key)) cells.set(key,{r,c,sol:w.answer[i],a:null,d:null,num:0});
+    cells.get(key)[w.dir]=true;
+  }
+  const rows=maxR-minR+1, cols=maxC-minC+1;
+  let n=0;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const key=K(r,c);
+    if(cells.has(key)&&words.some(w=>w.r===r&&w.c===c)){ n++; cells.get(key).num=n; }
+  }
+  for(const w of words) w.num=cells.get(K(w.r,w.c)).num;
+  return {words, rows, cols, count:words.length, cellsCount:cells.size};
+}
+
+if(typeof module!=="undefined") module.exports={makeCrossword, normalizeEntries, K};
+// База: { a: СЛОВО (без Ё), c: подсказка, t: тема }
+const DICTIONARY = [
+// ===== Животные =====
+{a:"КОШКА",c:"Домашняя мурлыка",t:"Животные"},
+{a:"СОБАКА",c:"Верный друг человека, лает",t:"Животные"},
+{a:"КОРОВА",c:"Даёт молоко, говорит «му»",t:"Животные"},
+{a:"ЛОШАДЬ",c:"Скакун с гривой и копытами",t:"Животные"},
+{a:"СВИНЬЯ",c:"Розовая, с пятачком",t:"Животные"},
+{a:"КОЗА",c:"Бодливая, с рожками, даёт молоко",t:"Животные"},
+{a:"ОВЦА",c:"Даёт шерсть, говорит «бе-е»",t:"Животные"},
+{a:"КРОЛИК",c:"Пушистый зверёк с длинными ушами",t:"Животные"},
+{a:"МЫШЬ",c:"Маленький серый грызун",t:"Животные"},
+{a:"МЕДВЕДЬ",c:"Хозяин тайги, любит мёд",t:"Животные"},
+{a:"ВОЛК",c:"Серый хищник, живёт в стае",t:"Животные"},
+{a:"ЛИСА",c:"Рыжая хитрюга из сказок",t:"Животные"},
+{a:"ЗАЯЦ",c:"Косой трусишка, быстро скачет",t:"Животные"},
+{a:"БЕЛКА",c:"Рыжий зверёк, грызёт орешки",t:"Животные"},
+{a:"ЕЖИК",c:"Колючий лесной зверёк",t:"Животные"},
+{a:"ОЛЕНЬ",c:"Лесной красавец с ветвистыми рогами",t:"Животные"},
+{a:"ЛОСЬ",c:"Крупный лесной зверь с большими рогами",t:"Животные"},
+{a:"КРОТ",c:"Роет подземные ходы, плохо видит",t:"Животные"},
+{a:"ТИГР",c:"Полосатый хищник из джунглей",t:"Животные"},
+{a:"ЛЕВ",c:"Царь зверей с гривой",t:"Животные"},
+{a:"СЛОН",c:"Великан с хоботом и бивнями",t:"Животные"},
+{a:"ЖИРАФ",c:"Самое высокое животное саванны",t:"Животные"},
+{a:"ЗЕБРА",c:"Полосатая лошадка Африки",t:"Животные"},
+{a:"ОБЕЗЬЯНА",c:"Любит бананы, живёт на деревьях",t:"Животные"},
+{a:"КЕНГУРУ",c:"Прыгает и носит детёныша в сумке",t:"Животные"},
+{a:"ВЕРБЛЮД",c:"Корабль пустыни с горбами",t:"Животные"},
+{a:"КРОКОДИЛ",c:"Зубастый обитатель тропических рек",t:"Животные"},
+{a:"ЧЕРЕПАХА",c:"Носит дом-панцирь на спине",t:"Животные"},
+{a:"ЛЯГУШКА",c:"Зелёная квакушка из пруда",t:"Животные"},
+{a:"ЗМЕЯ",c:"Ползёт без ног и шипит",t:"Животные"},
+{a:"ОРЕЛ",c:"Гордая горная птица",t:"Животные"},
+{a:"СОВА",c:"Ночная птица, символ мудрости",t:"Животные"},
+{a:"АИСТ",c:"Длинноногая белая птица",t:"Животные"},
+{a:"ВОРОНА",c:"Чёрная городская птица",t:"Животные"},
+{a:"ВОРОБЕЙ",c:"Маленькая шустрая птичка",t:"Животные"},
+{a:"ГОЛУБЬ",c:"Птица мира, городской житель",t:"Животные"},
+{a:"УТКА",c:"Плавает в пруду, крякает",t:"Животные"},
+{a:"ПЕТУХ",c:"Будит всех на рассвете",t:"Животные"},
+{a:"ПИНГВИН",c:"Птица Антарктиды, не летает",t:"Животные"},
+{a:"ПАВЛИН",c:"Птица с роскошным хвостом",t:"Животные"},
+{a:"ДЯТЕЛ",c:"Лесной доктор, стучит по дереву",t:"Животные"},
+{a:"АКУЛА",c:"Зубастая морская хищница",t:"Животные"},
+{a:"КИТ",c:"Самый большой обитатель океана",t:"Животные"},
+{a:"ДЕЛЬФИН",c:"Умное морское животное",t:"Животные"},
+{a:"ОСЬМИНОГ",c:"Морской житель с восемью щупальцами",t:"Животные"},
+{a:"КРАБ",c:"Морской житель с клешнями",t:"Животные"},
+{a:"ЩУКА",c:"Хищная речная рыба",t:"Животные"},
+{a:"ОКУНЬ",c:"Речная рыба с полосками",t:"Животные"},
+{a:"СОМ",c:"Большая усатая донная рыба",t:"Животные"},
+{a:"РАК",c:"Пятится назад, с клешнями",t:"Животные"},
+
+// ===== Природа =====
+{a:"РОЗА",c:"Королева цветов с шипами",t:"Природа"},
+{a:"РОМАШКА",c:"Полевой цветок с белыми лепестками",t:"Природа"},
+{a:"ТЮЛЬПАН",c:"Весенний цветок-бокал",t:"Природа"},
+{a:"ОДУВАНЧИК",c:"Жёлтый, потом пушистый шарик",t:"Природа"},
+{a:"ДУБ",c:"Могучее дерево с желудями",t:"Природа"},
+{a:"БЕРЕЗА",c:"Белоствольное русское дерево",t:"Природа"},
+{a:"СОСНА",c:"Хвойное дерево с шишками",t:"Природа"},
+{a:"ЕЛЬ",c:"Новогоднее хвойное дерево",t:"Природа"},
+{a:"КЛЕН",c:"Дерево с резными листьями",t:"Природа"},
+{a:"ИВА",c:"Дерево, склонённое над водой",t:"Природа"},
+{a:"ГРИБ",c:"Растёт в лесу, бывает белый",t:"Природа"},
+{a:"ТРАВА",c:"Зелёный покров луга",t:"Природа"},
+{a:"ЛИСТ",c:"Зелёный летом, жёлтый осенью",t:"Природа"},
+{a:"СОЛНЦЕ",c:"Дневное светило",t:"Природа"},
+{a:"ЛУНА",c:"Ночное светило, спутник Земли",t:"Природа"},
+{a:"ЗВЕЗДА",c:"Светится в ночном небе",t:"Природа"},
+{a:"ПЛАНЕТА",c:"Земля, Марс или Венера",t:"Природа"},
+{a:"КОМЕТА",c:"Небесное тело с хвостом",t:"Природа"},
+{a:"ДОЖДЬ",c:"Падает из тучи",t:"Природа"},
+{a:"СНЕГ",c:"Белые хлопья зимой",t:"Природа"},
+{a:"ГРОЗА",c:"Гром и молния вместе",t:"Природа"},
+{a:"МОЛНИЯ",c:"Яркая вспышка в небе в грозу",t:"Природа"},
+{a:"ВЕТЕР",c:"Движение воздуха",t:"Природа"},
+{a:"РАДУГА",c:"Семицветная дуга после дождя",t:"Природа"},
+{a:"ТУМАН",c:"Облако у самой земли",t:"Природа"},
+{a:"МОРОЗ",c:"Сильный холод зимой",t:"Природа"},
+{a:"ОБЛАКО",c:"Белое плывёт по небу",t:"Природа"},
+{a:"РЕКА",c:"Течёт к морю",t:"Природа"},
+{a:"ОЗЕРО",c:"Большой водоём со стоячей водой",t:"Природа"},
+{a:"ГОРА",c:"Высокая каменная вершина",t:"Природа"},
+{a:"МОРЕ",c:"Солёный простор воды",t:"Природа"},
+{a:"ОКЕАН",c:"Самый большой водный простор",t:"Природа"},
+{a:"ОСТРОВ",c:"Суша, окружённая водой",t:"Природа"},
+{a:"ПУСТЫНЯ",c:"Жаркие пески без воды",t:"Природа"},
+{a:"ВУЛКАН",c:"Огнедышащая гора",t:"Природа"},
+{a:"ЛЕС",c:"Где растёт много деревьев",t:"Природа"},
+{a:"ПОЛЕ",c:"Простор, засеянный пшеницей",t:"Природа"},
+{a:"КАМЕНЬ",c:"Твёрдый, лежит на дороге",t:"Природа"},
+
+// ===== Еда =====
+{a:"ХЛЕБ",c:"Всему голова",t:"Еда"},
+{a:"СЫР",c:"Молочный продукт с дырками",t:"Еда"},
+{a:"МАСЛО",c:"Намазывают на хлеб",t:"Еда"},
+{a:"МОЛОКО",c:"Белый напиток от коровы",t:"Еда"},
+{a:"ТВОРОГ",c:"Из него делают сырники",t:"Еда"},
+{a:"МЕД",c:"Сладкий дар пчёл",t:"Еда"},
+{a:"САХАР",c:"Сладкий, кладут в чай",t:"Еда"},
+{a:"СОЛЬ",c:"Белая приправа из моря",t:"Еда"},
+{a:"КАША",c:"Завтрак из крупы",t:"Еда"},
+{a:"СУП",c:"Первое блюдо в тарелке",t:"Еда"},
+{a:"БОРЩ",c:"Свекольный красный суп",t:"Еда"},
+{a:"КОТЛЕТА",c:"Жареная из фарша",t:"Еда"},
+{a:"ПЕЛЬМЕНИ",c:"Тесто с мясом внутри",t:"Еда"},
+{a:"БЛИНЫ",c:"Тонкие, пекут на Масленицу",t:"Еда"},
+{a:"ПИРОГ",c:"Печёное с начинкой",t:"Еда"},
+{a:"ТОРТ",c:"Сладкое с кремом на праздник",t:"Еда"},
+{a:"КОНФЕТА",c:"Сладость в фантике",t:"Еда"},
+{a:"ШОКОЛАД",c:"Сладкая плитка из какао",t:"Еда"},
+{a:"ЧАЙ",c:"Горячий напиток с лимоном",t:"Еда"},
+{a:"КОФЕ",c:"Бодрящий напиток по утрам",t:"Еда"},
+{a:"СОК",c:"Напиток, выжатый из фруктов",t:"Еда"},
+{a:"ЯБЛОКО",c:"Фрукт, упавший на Ньютона",t:"Еда"},
+{a:"ГРУША",c:"Сладкий фрукт в форме лампочки",t:"Еда"},
+{a:"БАНАН",c:"Жёлтый тропический фрукт",t:"Еда"},
+{a:"ЛИМОН",c:"Кислый жёлтый цитрус",t:"Еда"},
+{a:"АПЕЛЬСИН",c:"Оранжевый сочный цитрус",t:"Еда"},
+{a:"ВИНОГРАД",c:"Растёт гроздьями, из него вино",t:"Еда"},
+{a:"АРБУЗ",c:"Большая полосатая ягода",t:"Еда"},
+{a:"СЛИВА",c:"Синий сочный фрукт с косточкой",t:"Еда"},
+{a:"ВИШНЯ",c:"Красная ягода с косточкой",t:"Еда"},
+{a:"МАЛИНА",c:"Сладкая лесная ягода",t:"Еда"},
+{a:"КЛУБНИКА",c:"Красная садовая ягода",t:"Еда"},
+{a:"ОГУРЕЦ",c:"Зелёный овощ для салата",t:"Еда"},
+{a:"ПОМИДОР",c:"Красный сочный овощ",t:"Еда"},
+{a:"МОРКОВЬ",c:"Оранжевый овощ, любит заяц",t:"Еда"},
+{a:"КАРТОШКА",c:"Второй хлеб, копают осенью",t:"Еда"},
+{a:"КАПУСТА",c:"Из неё варят щи, кочан",t:"Еда"},
+{a:"ЛУК",c:"Овощ, от которого плачут",t:"Еда"},
+{a:"ТЫКВА",c:"Большой оранжевый овощ к Хэллоуину",t:"Еда"},
+{a:"ПЕРЕЦ",c:"Острая приправа или овощ",t:"Еда"},
+
+// ===== Дом и быт =====
+{a:"ДВЕРЬ",c:"Вход в комнату",t:"Дом"},
+{a:"ОКНО",c:"Через него виден двор",t:"Дом"},
+{a:"СТЕНА",c:"Вертикальная часть комнаты",t:"Дом"},
+{a:"КРЫША",c:"Верх дома, защита от дождя",t:"Дом"},
+{a:"СТОЛ",c:"За ним обедают",t:"Дом"},
+{a:"СТУЛ",c:"На нём сидят",t:"Дом"},
+{a:"КРОВАТЬ",c:"На ней спят",t:"Дом"},
+{a:"ДИВАН",c:"Мягкая мебель в гостиной",t:"Дом"},
+{a:"ШКАФ",c:"Хранят одежду и посуду",t:"Дом"},
+{a:"ЛАМПА",c:"Светит в комнате",t:"Дом"},
+{a:"КОВЕР",c:"Лежит на полу для тепла",t:"Дом"},
+{a:"ЧАСЫ",c:"Показывают время",t:"Дом"},
+{a:"ЗЕРКАЛО",c:"В него смотрятся",t:"Дом"},
+{a:"ТАРЕЛКА",c:"Из неё едят суп",t:"Дом"},
+{a:"ЛОЖКА",c:"Ею едят суп",t:"Дом"},
+{a:"ВИЛКА",c:"Ею накалывают еду",t:"Дом"},
+{a:"НОЖ",c:"Им режут хлеб",t:"Дом"},
+{a:"ЧАШКА",c:"Из неё пьют чай",t:"Дом"},
+{a:"ЧАЙНИК",c:"В нём кипятят воду",t:"Дом"},
+{a:"КЛЮЧ",c:"Им открывают замок",t:"Дом"},
+{a:"ЗАМОК",c:"Запирает дверь",t:"Дом"},
+{a:"ШАПКА",c:"Греет голову зимой",t:"Дом"},
+{a:"ШАРФ",c:"Обматывают вокруг шеи",t:"Дом"},
+{a:"КУРТКА",c:"Верхняя одежда на осень",t:"Дом"},
+{a:"ПЛАТЬЕ",c:"Женский наряд",t:"Дом"},
+{a:"РУБАШКА",c:"Мужская одежда с пуговицами",t:"Дом"},
+{a:"ЮБКА",c:"Женская одежда ниже пояса",t:"Дом"},
+{a:"НОСКИ",c:"Надевают на ноги под обувь",t:"Дом"},
+{a:"САПОГИ",c:"Высокая обувь от грязи",t:"Дом"},
+{a:"ВАЛЕНКИ",c:"Тёплая зимняя войлочная обувь",t:"Дом"},
+{a:"ЗОНТ",c:"Спасает от дождя",t:"Дом"},
+
+// ===== Транспорт =====
+{a:"МАШИНА",c:"Едет по дороге на четырёх колёсах",t:"Транспорт"},
+{a:"АВТОБУС",c:"Городской транспорт по маршруту",t:"Транспорт"},
+{a:"ТРАМВАЙ",c:"Едет по рельсам по городу",t:"Транспорт"},
+{a:"ПОЕЗД",c:"Едет по железной дороге",t:"Транспорт"},
+{a:"САМОЛЕТ",c:"Летает по небу",t:"Транспорт"},
+{a:"ВЕРТОЛЕТ",c:"Летает с винтом над собой",t:"Транспорт"},
+{a:"КОРАБЛЬ",c:"Плывёт по морю",t:"Транспорт"},
+{a:"ЛОДКА",c:"Маленькое судно с вёслами",t:"Транспорт"},
+{a:"ВЕЛОСИПЕД",c:"Два колеса и педали",t:"Транспорт"},
+{a:"МОТОЦИКЛ",c:"Быстрый двухколёсный с мотором",t:"Транспорт"},
+{a:"РАКЕТА",c:"Летит в космос",t:"Транспорт"},
+{a:"МЕТРО",c:"Подземная городская дорога",t:"Транспорт"},
+{a:"ТАКСИ",c:"Машина с шашечками",t:"Транспорт"},
+{a:"ТРАКТОР",c:"Пашет поле в деревне",t:"Транспорт"},
+
+// ===== Люди и профессии =====
+{a:"ГОЛОВА",c:"Верхняя часть тела, в ней мозг",t:"Люди"},
+{a:"РУКА",c:"Ею пишут и держат",t:"Люди"},
+{a:"НОГА",c:"Ею ходят",t:"Люди"},
+{a:"ГЛАЗ",c:"Им видят",t:"Люди"},
+{a:"НОС",c:"Им нюхают",t:"Люди"},
+{a:"ЗУБ",c:"Им жуют, белый во рту",t:"Люди"},
+{a:"ВОЛОСЫ",c:"Растут на голове",t:"Люди"},
+{a:"СЕРДЦЕ",c:"Стучит в груди",t:"Люди"},
+{a:"ПАЛЕЦ",c:"Их пять на руке",t:"Люди"},
+{a:"ВРАЧ",c:"Лечит больных",t:"Люди"},
+{a:"УЧИТЕЛЬ",c:"Учит детей в школе",t:"Люди"},
+{a:"ПОВАР",c:"Готовит еду в ресторане",t:"Люди"},
+{a:"ПОЖАРНЫЙ",c:"Тушит огонь",t:"Люди"},
+{a:"ПОЛИЦИЯ",c:"Ловит нарушителей порядка",t:"Люди"},
+{a:"ПИЛОТ",c:"Управляет самолётом",t:"Люди"},
+{a:"ВОДИТЕЛЬ",c:"Управляет машиной",t:"Люди"},
+{a:"ХУДОЖНИК",c:"Рисует картины",t:"Люди"},
+{a:"ПЕВЕЦ",c:"Поёт песни",t:"Люди"},
+{a:"АКТЕР",c:"Играет роли в кино",t:"Люди"},
+{a:"ПИСАТЕЛЬ",c:"Пишет книги",t:"Люди"},
+{a:"ФЕРМЕР",c:"Работает на ферме",t:"Люди"},
+{a:"КОСМОНАВТ",c:"Летает в космос",t:"Люди"},
+{a:"ПОЧТАЛЬОН",c:"Разносит письма",t:"Люди"},
+
+// ===== Школа, культура, спорт =====
+{a:"ШКОЛА",c:"Сюда дети ходят учиться",t:"Школа"},
+{a:"УРОК",c:"Занятие в школе",t:"Школа"},
+{a:"ПАРТА",c:"За ней сидит ученик",t:"Школа"},
+{a:"ДОСКА",c:"На ней пишут мелом",t:"Школа"},
+{a:"МЕЛ",c:"Им пишут на доске",t:"Школа"},
+{a:"РУЧКА",c:"Ею пишут в тетради",t:"Школа"},
+{a:"КАРАНДАШ",c:"Им рисуют, можно стереть",t:"Школа"},
+{a:"ТЕТРАДЬ",c:"В неё пишут на уроке",t:"Школа"},
+{a:"ПОРТФЕЛЬ",c:"В нём носят учебники",t:"Школа"},
+{a:"ГЛОБУС",c:"Модель Земли на подставке",t:"Школа"},
+{a:"ЦИФРА",c:"Один, два или три",t:"Школа"},
+{a:"БУКВА",c:"А, Б или В",t:"Школа"},
+{a:"ГИТАРА",c:"Струнный инструмент с грифом",t:"Школа"},
+{a:"СКРИПКА",c:"Играют смычком",t:"Школа"},
+{a:"БАРАБАН",c:"По нему бьют палочками",t:"Школа"},
+{a:"ПИАНИНО",c:"Клавишный инструмент",t:"Школа"},
+{a:"ТРУБА",c:"Духовой медный инструмент",t:"Школа"},
+{a:"ПЕСНЯ",c:"Её поют под музыку",t:"Школа"},
+{a:"ТАНЕЦ",c:"Движения под музыку",t:"Школа"},
+{a:"КАРТИНА",c:"Висит в музее, нарисована",t:"Школа"},
+{a:"КНИГА",c:"Её читают, со страницами",t:"Школа"},
+{a:"ФУТБОЛ",c:"Игра с мячом ногами",t:"Школа"},
+{a:"ХОККЕЙ",c:"Игра на льду с шайбой",t:"Школа"},
+{a:"ШАХМАТЫ",c:"Игра с королём и пешками",t:"Школа"},
+{a:"МЯЧ",c:"Круглый, для игры",t:"Школа"},
+{a:"КОНЬКИ",c:"На них катаются по льду",t:"Школа"},
+{a:"ЛЫЖИ",c:"На них катаются по снегу",t:"Школа"},
+{a:"КОРОЛЬ",c:"Главный во дворце, в короне",t:"Школа"},
+{a:"ПРИНЦЕССА",c:"Дочь короля",t:"Школа"},
+{a:"ДРАКОН",c:"Огнедышащее чудище из сказок",t:"Школа"},
+{a:"ВОЛШЕБНИК",c:"Творит чудеса",t:"Школа"},
+{a:"ДВОРЕЦ",c:"Роскошный дом короля",t:"Школа"},
+{a:"КЛАД",c:"Спрятанные сокровища",t:"Школа"},
+];
+if(typeof module!=="undefined") module.exports={DICTIONARY};
+
+// ================= UI / логика =================
+const $=id=>document.getElementById(id);
+const SIZES={small:{target:10,maxLen:7,tries:42},medium:{target:14,maxLen:8,tries:36},large:{target:18,maxLen:9,tries:30}};
+
+let model=null, activeKey=null, activeDir="a", celebrated=false;
+const gridEl=$("grid"), hidden=$("hidden");
+
+// ---- хранилище: артефакт (window.storage) или localStorage на хостинге ----
+const Store={
+  async get(k){try{if(window.storage&&window.storage.get){const r=await window.storage.get(k);return r?r.value:null;}return localStorage.getItem(k);}catch(e){return null;}},
+  async set(k,v){try{if(window.storage&&window.storage.set){await window.storage.set(k,v,false);return;}localStorage.setItem(k,v);}catch(e){}}
+};
+
+// ---- темы в выпадающий список ----
+(function fillThemes(){
+  const sel=$("themeSel"); const themes=[...new Set(DICTIONARY.map(e=>e.t))];
+  sel.innerHTML='<option value="all">Все темы</option>'+themes.map(t=>`<option value="${t}">${t}</option>`).join("");
+})();
+
+// ---- построение модели из результата генератора ----
+function buildModel(gen){
+  const cells=new Map(), words=[];
+  for(const w of gen.words){
+    const keys=[];
+    for(let i=0;i<w.answer.length;i++){
+      const r=w.r+(w.dir==="d"?i:0), c=w.c+(w.dir==="a"?i:0), k=K(r,c);
+      if(!cells.has(k)) cells.set(k,{r,c,sol:w.answer[i],user:"",num:0,a:null,d:null,el:null});
+      keys.push(k);
+    }
+    words.push({dir:w.dir,r:w.r,c:w.c,answer:w.answer,clue:w.clue,num:w.num,keys,start:keys[0]});
+  }
+  for(const w of words){for(const k of w.keys) cells.get(k)[w.dir]=w; cells.get(w.start).num=w.num;}
+  const ordered=[...words].sort((x,y)=>x.num-y.num||(x.dir==="a"?-1:1));
+  return {cells,words,ordered,rows:gen.rows,cols:gen.cols};
+}
+
+// ---- генерация нового кроссворда ----
+function newPuzzle(){
+  $("loading").style.display="flex";
+  setTimeout(()=>{
+    const theme=$("themeSel").value, size=$("sizeSel").value;
+    const pool=theme==="all"?DICTIONARY:DICTIONARY.filter(e=>e.t===theme);
+    const entries=pool.map(e=>({answer:e.a,clue:e.c}));
+    const opts=SIZES[size]||SIZES.medium;
+    let gen=null,n=0;
+    while(!gen&&n<6){gen=makeCrossword(entries,opts);n++;}
+    if(!gen) gen=makeCrossword(entries,{target:8,maxLen:7,tries:30});
+    model=buildModel(gen); celebrated=false;
+    render(); selectFirst(); saveState();
+    $("loading").style.display="none";
+  },30);
+}
+
+// ---- отрисовка сетки ----
+function render(){
+  gridEl.style.gridTemplateColumns=`repeat(${model.cols}, var(--cs))`;
+  gridEl.innerHTML="";
+  for(let r=0;r<model.rows;r++)for(let c=0;c<model.cols;c++){
+    const k=K(r,c), cell=model.cells.get(k);
+    if(!cell){const g=document.createElement("div");g.className="gap";gridEl.appendChild(g);continue;}
+    const d=document.createElement("div");d.className="cell";d.dataset.k=k;
+    if(cell.num){const nm=document.createElement("span");nm.className="num";nm.textContent=cell.num;d.appendChild(nm);}
+    const lt=document.createElement("span");lt.className="ltr";lt.textContent=cell.user||"";d.appendChild(lt);
+    d.addEventListener("click",()=>onCellTap(k));
+    cell.el=d; gridEl.appendChild(d);
+  }
+  layoutGrid(); buildClueLists();
+}
+function layoutGrid(){
+  const avail=Math.min(gridEl.parentElement.clientWidth, 560)-2;
+  let cs=Math.floor(avail/model.cols);
+  cs=Math.max(20,Math.min(cs,46));
+  document.documentElement.style.setProperty("--cs",cs+"px");
+}
+window.addEventListener("resize",()=>{if(model)layoutGrid();});
+
+// ---- выбор клетки/слова ----
+function wordsAt(k){const c=model.cells.get(k);return [c.a,c.d].filter(Boolean);}
+function onCellTap(k){
+  const c=model.cells.get(k);
+  if(activeKey===k){ // повторное нажатие — сменить направление
+    if(c.a&&c.d) activeDir=activeDir==="a"?"d":"a";
+  }else{
+    activeKey=k;
+    if(!c[activeDir]) activeDir=c.a?"a":"d";
+  }
+  focusHidden(); refresh();
+}
+function selectFirst(){const w=model.ordered[0];activeDir=w.dir;activeKey=w.start;refresh();}
+function activeWord(){return model.cells.get(activeKey)[activeDir];}
+function focusHidden(){hidden.value="";try{hidden.focus({preventScroll:true});}catch(e){hidden.focus();}}
+
+// ---- ввод ----
+hidden.addEventListener("input",()=>{
+  const v=hidden.value; hidden.value="";
+  const ch=v.slice(-1).toUpperCase();
+  if(/[А-ЯЁ]/.test(ch)) typeLetter(ch==="Ё"?"Е":ch);
+});
+hidden.addEventListener("keydown",e=>{
+  if(e.key==="Backspace"){e.preventDefault();backspace();}
+  else if(e.key==="ArrowRight"){e.preventDefault();moveSel(0,1);}
+  else if(e.key==="ArrowLeft"){e.preventDefault();moveSel(0,-1);}
+  else if(e.key==="ArrowUp"){e.preventDefault();moveSel(-1,0);}
+  else if(e.key==="ArrowDown"){e.preventDefault();moveSel(1,0);}
+  else if(e.key===" "){e.preventDefault();const c=model.cells.get(activeKey);if(c.a&&c.d){activeDir=activeDir==="a"?"d":"a";refresh();}}
+  else if(e.key==="Tab"){e.preventDefault();nextWord(e.shiftKey?-1:1);}
+});
+function typeLetter(ch){
+  const c=model.cells.get(activeKey); c.user=ch; c.el.classList.remove("wrong","right","revealed");
+  c.el.querySelector(".ltr").textContent=ch;
+  advance(); saveState(); refresh();
+}
+function advance(){
+  const w=activeWord(); const i=w.keys.indexOf(activeKey);
+  for(let j=i+1;j<w.keys.length;j++){if(!model.cells.get(w.keys[j]).user){activeKey=w.keys[j];return;}}
+  if(i+1<w.keys.length)activeKey=w.keys[i+1];
+}
+function backspace(){
+  const c=model.cells.get(activeKey);
+  if(c.user){c.user="";c.el.querySelector(".ltr").textContent="";c.el.classList.remove("wrong","right","revealed");}
+  else{const w=activeWord();const i=w.keys.indexOf(activeKey);if(i>0){activeKey=w.keys[i-1];const p=model.cells.get(activeKey);p.user="";p.el.querySelector(".ltr").textContent="";p.el.classList.remove("wrong","right","revealed");}}
+  saveState(); refresh();
+}
+function moveSel(dr,dc){
+  let r=model.cells.get(activeKey).r+dr, c=model.cells.get(activeKey).c+dc;
+  while(r>=0&&c>=0&&r<model.rows&&c<model.cols){const k=K(r,c);if(model.cells.has(k)){activeKey=k;const cc=model.cells.get(k);if(!cc[activeDir])activeDir=cc.a?"a":"d";refresh();return;}r+=dr;c+=dc;}
+}
+function nextWord(dir){
+  const idx=model.ordered.indexOf(activeWord());
+  const w=model.ordered[(idx+dir+model.ordered.length)%model.ordered.length];
+  activeDir=w.dir; activeKey=w.start; focusHidden(); refresh();
+}
+
+// ---- подсветка и обновление ----
+function refresh(){
+  const w=activeWord(); const inword=new Set(w?w.keys:[]);
+  for(const [k,c] of model.cells){if(!c.el)continue;c.el.classList.toggle("inword",inword.has(k)&&k!==activeKey);c.el.classList.toggle("active",k===activeKey);}
+  if(w){$("clueTag").textContent=w.dir==="a"?"по горизонтали":"по вертикали";$("clueText").textContent=w.num+". "+w.clue;}
+  document.querySelectorAll(".clue").forEach(el=>{
+    el.classList.toggle("active",el.dataset.k===activeKey&&el.dataset.dir===activeDir);
+    const ww=model.ordered.find(x=>x.start===el.dataset.k&&x.dir===el.dataset.dir);
+    if(ww)el.classList.toggle("solved",ww.keys.every(k=>model.cells.get(k).user===model.cells.get(k).sol));
+  });
+  let filled=0,total=model.cells.size;
+  for(const[,c]of model.cells)if(c.user)filled++;
+  $("progress").innerHTML=`Заполнено <b>${filled}</b> из <b>${total}</b> клеток`;
+  if(filled===total&&!celebrated){let allRight=true;for(const[,c]of model.cells)if(c.user!==c.sol){allRight=false;break;}if(allRight)celebrate();}
+}
+
+// ---- списки вопросов ----
+function buildClueLists(){
+  const across=model.ordered.filter(w=>w.dir==="a"), down=model.ordered.filter(w=>w.dir==="d");
+  const html=col=>col.map(w=>`<div class="clue" data-k="${w.start}" data-dir="${w.dir}"><span class="n">${w.num}</span><span class="t">${w.clue}</span></div>`).join("");
+  const block=`<div class="cluecol"><h3>По горизонтали</h3>${html(across)}</div><div class="cluecol"><h3>По вертикали</h3>${html(down)}</div>`;
+  $("cluePanel").innerHTML=block; $("mobileClues").innerHTML=block;
+  document.querySelectorAll(".clue").forEach(el=>el.addEventListener("click",()=>{activeKey=el.dataset.k;activeDir=el.dataset.dir;focusHidden();refresh();}));
+}
+
+// ---- кнопки ----
+$("checkBtn").addEventListener("click",()=>{
+  for(const[,c]of model.cells){if(!c.el)continue;c.el.classList.remove("wrong","right");if(c.user){c.el.classList.add(c.user===c.sol?"right":"wrong");}}
+  refresh();
+});
+$("hintBtn").addEventListener("click",()=>{
+  const c=model.cells.get(activeKey);if(!c)return;c.user=c.sol;c.el.querySelector(".ltr").textContent=c.sol;
+  c.el.classList.remove("wrong");c.el.classList.add("revealed");advance();saveState();refresh();
+});
+$("clearBtn").addEventListener("click",()=>{
+  for(const[,c]of model.cells){if(!c.el)continue;c.user="";c.el.querySelector(".ltr").textContent="";c.el.classList.remove("wrong","right","revealed");}
+  saveState();refresh();
+});
+$("prevW").addEventListener("click",()=>nextWord(-1));
+$("nextW").addEventListener("click",()=>nextWord(1));
+$("newBtn").addEventListener("click",newPuzzle);
+$("themeSel").addEventListener("change",newPuzzle);
+$("sizeSel").addEventListener("change",newPuzzle);
+
+// ---- победа ----
+function celebrate(){
+  celebrated=true;
+  $("winText").textContent=`Тема: ${$("themeSel").options[$("themeSel").selectedIndex].text}. Отличная работа!`;
+  $("win").classList.add("show"); confetti();
+}
+$("winNew").addEventListener("click",()=>{$("win").classList.remove("show");newPuzzle();});
+$("winClose").addEventListener("click",()=>$("win").classList.remove("show"));
+function confetti(){
+  if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const box=$("confetti"); const cols=["#C44569","#2A9D8F","#E9C46A","#28243D","#F2A1B6"];
+  for(let i=0;i<70;i++){const d=document.createElement("div");d.className="conf";
+    d.style.left=Math.random()*100+"%";d.style.background=cols[i%cols.length];d.style.borderColor="rgba(40,36,61,.3)";
+    const dur=2.2+Math.random()*1.6;d.style.animation=`fall ${dur}s linear ${Math.random()*0.5}s forwards`;
+    d.style.opacity=0.9;box.appendChild(d);setTimeout(()=>d.remove(),(dur+1)*1000);}
+}
+
+// ---- сохранение / восстановление ----
+function saveState(){
+  if(!model)return;
+  const g={rows:model.rows,cols:model.cols,theme:$("themeSel").value,size:$("sizeSel").value,
+    words:model.words.map(w=>({answer:w.answer,clue:w.clue,r:w.r,c:w.c,dir:w.dir,num:w.num}))};
+  const user={};for(const[k,c]of model.cells)if(c.user)user[k]=c.user;
+  Store.set("cw_state",JSON.stringify({g,user}));
+}
+async function start(){
+  const raw=await Store.get("cw_state");
+  if(raw){try{
+    const {g,user}=JSON.parse(raw);
+    if(g&&g.words&&g.words.length){
+      $("themeSel").value=g.theme||"all"; $("sizeSel").value=g.size||"medium";
+      model=buildModel(g); celebrated=false; render();
+      if(user)for(const k in user){const c=model.cells.get(k);if(c){c.user=user[k];const lt=c.el&&c.el.querySelector(".ltr");if(lt)lt.textContent=user[k];}}
+      selectFirst(); return;
+    }
+  }catch(e){}}
+  newPuzzle();
+}
+start();
+</script>
+</body>
+</html>
